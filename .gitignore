@@ -1,0 +1,19 @@
+# Outputs, caches, secrets — never commit these
+*.mp4
+*.jpg
+*.png
+*.wav
+*.mp3
+*.raw
+*.log
+subs/
+beats/
+snapshots/
+_frames/
+assets/
+node_modules/
+drafts/
+logs/
+cache/
+tokens.json
+.env

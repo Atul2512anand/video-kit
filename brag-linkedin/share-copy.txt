@@ -1,0 +1,1 @@
+CVSS 10.0. No login. Root on Kubernetes. The Dell CSM flaw and the 3-step kill chain — plus the patch-NOW checklist.

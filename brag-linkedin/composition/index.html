@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+html, body { margin:0; padding:0; width:1080px; height:1920px; overflow:hidden; background:#0A0F1E; }
+#root { position:relative; width:100%; height:100%; overflow:hidden; font-family: Inter, system-ui, -apple-system, sans-serif; }
+.clip { position:absolute; inset:0; overflow:hidden; }
+.s1, .s2, .s3, .s4 { background:#0A0F1E; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ghost { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.16; }
+.rule { position:absolute; left:0; top:0; bottom:0; width:14px; background:#22D3EE; }
+.eyebrow { position:relative; font-size:40px; font-weight:800; letter-spacing:0.14em; color:#22D3EE; }
+h1, h2, .bridge, .miss, .cta { margin:0; }
+.s1 h1 { position:relative; width:920px; text-align:center; font-size:150px; line-height:1.0; font-weight:900; letter-spacing:-0.03em; color:#F2F5F9; margin-top:10px; }
+.s1 h2 { position:relative; width:900px; text-align:center; font-size:60px; line-height:1.15; font-weight:800; color:#F2F5F9; margin-top:24px; }
+.s1 h2 em { font-style:normal; color:#22D3EE; }
+.gauge-wrap { position:relative; width:340px; height:340px; margin-top:26px; }
+.gauge-num { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#F2F5F9; }
+.gauge-num strong { font-size:96px; font-weight:900; letter-spacing:-0.03em; }
+.gauge-num span { font-size:26px; font-weight:700; letter-spacing:0.2em; color:#22D3EE; }
+.s2 h2 { position:relative; width:900px; text-align:center; font-size:68px; line-height:1.1; font-weight:900; color:#F2F5F9; margin-top:20px; }
+.s2 .bridge { position:relative; width:860px; text-align:center; font-size:34px; line-height:1.45; color:#B9C2D0; margin-top:20px; }
+.chip { position:relative; margin-top:30px; background:#22D3EE; color:#0A0F1E; font-size:42px; font-weight:900; padding:20px 42px; border-radius:20px; }
+.s2 .miss { position:relative; width:860px; text-align:center; font-size:36px; line-height:1.4; font-weight:700; color:#F2F5F9; margin-top:24px; }
+.diagram { position:relative; width:920px; height:490px; margin-top:26px; }
+.diagram .cap { position:absolute; font-size:28px; font-weight:800; letter-spacing:0.08em; color:#B9C2D0; text-align:center; width:260px; top:436px; }
+.s3 .label { position:relative; font-size:34px; font-weight:800; letter-spacing:0.08em; color:#22D3EE; }
+.s3 .steps { position:relative; width:920px; margin-top:24px; display:flex; flex-direction:column; gap:20px; }
+.s3 .step { background:#131B31; border:2px solid #26314F; border-radius:24px; padding:24px 30px; display:flex; gap:22px; align-items:center; position:relative; }
+.s3 .step b { display:block; font-size:40px; font-weight:900; letter-spacing:-0.02em; color:#F2F5F9; }
+.s3 .step i { display:block; font-style:normal; font-size:28px; color:#B9C2D0; margin-top:6px; }
+.s3 .step.root { border-color:#22D3EE; background:#16213B; }
+.s3 .icon { width:150px; height:150px; flex-shrink:0; }
+.s3 .lessons { position:relative; width:920px; margin-top:24px; text-align:center; font-size:30px; line-height:1.6; font-weight:700; color:#B9C2D0; }
+.s3 .lessons b { color:#22D3EE; }
+.s4 h2 { position:relative; width:920px; text-align:center; font-size:96px; line-height:1.04; font-weight:900; letter-spacing:-0.03em; color:#F2F5F9; margin:10px 0 0 0; }
+.s4 h2 em { font-style:normal; color:#22D3EE; }
+.s4 .cta { position:relative; margin-top:30px; width:860px; text-align:center; font-size:38px; line-height:1.5; font-weight:700; color:#B9C2D0; }
+.s4 .mast { position:relative; margin-top:36px; font-size:40px; font-weight:800; letter-spacing:0.14em; color:#22D3EE; }
+.s4 .src { position:relative; margin-top:14px; font-size:30px; font-weight:600; color:#7C8497; }
+.tchar { opacity:0; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+
+<!-- SCENE 1: HOOK with severity gauge -->
+<section id="s1" class="clip s1" data-start="0" data-duration="3" data-track-index="0">
+<img class="ghost" id="s1-bg" src="assets/slides/slide1.png" alt="" />
+<div class="rule" id="s1-rule"></div>
+<div class="eyebrow" id="s1-eyebrow">DELL CSM · SECURITY ALERT</div>
+<div class="gauge-wrap" id="s1-gauge">
+<svg width="340" height="340" viewBox="0 0 340 340">
+<circle cx="170" cy="170" r="140" fill="none" stroke="#26314F" stroke-width="26"/>
+<circle id="s1-arc" cx="170" cy="170" r="140" fill="none" stroke="#22D3EE" stroke-width="26" stroke-linecap="round" transform="rotate(-90 170 170)"/>
+<circle id="s1-ping1" cx="170" cy="170" r="140" fill="none" stroke="#22D3EE" stroke-width="4" opacity="0"/>
+<circle id="s1-ping2" cx="170" cy="170" r="140" fill="none" stroke="#22D3EE" stroke-width="4" opacity="0"/>
+</svg>
+<div class="gauge-num"><strong id="s1-num">0.0</strong><span>CVSS</span></div>
+</div>
+<h1 id="s1-h1" style="font-size:110px">CVSS 10.0</h1>
+<h2 id="s1-h2">NO LOGIN. <em>ROOT ON KUBERNETES.</em></h2>
+</section>
+
+<!-- SCENE 2: ARCHITECTURE with live traffic + NO AUTH breach -->
+<section id="s2" class="clip s2" data-start="3" data-duration="4" data-track-index="0">
+<div class="rule" id="s2-rule"></div>
+<div class="eyebrow" id="s2-eyebrow">DELL CSM</div>
+<h2 id="s2-h2">The bridge between Kubernetes and Dell storage.</h2>
+<div class="diagram" id="s2-diag">
+<svg width="920" height="430" viewBox="0 0 920 430">
+<line x1="250" y1="190" x2="350" y2="190" stroke="#26314F" stroke-width="8" stroke-dasharray="18 14" id="s2-link1"/>
+<line x1="570" y1="190" x2="670" y2="190" stroke="#26314F" stroke-width="8" stroke-dasharray="18 14" id="s2-link2"/>
+<g id="s2-k8s" transform="translate(160,190)">
+<circle r="90" fill="none" stroke="#F2F5F9" stroke-width="12"/>
+<g id="s2-spokes" stroke="#F2F5F9" stroke-width="10">
+<line x1="0" y1="-78" x2="0" y2="78"/><line x1="-68" y1="-39" x2="68" y2="39"/><line x1="-68" y1="39" x2="68" y2="-39"/>
+</g>
+<circle r="26" fill="#22D3EE"/>
+</g>
+<g id="s2-bridge">
+<rect x="350" y="70" width="220" height="240" rx="24" fill="#131B31" stroke="#22D3EE" stroke-width="6" id="s2-bridgebox"/>
+<rect x="372" y="96" width="176" height="44" rx="10" fill="#26314F"/>
+<rect x="372" y="152" width="176" height="44" rx="10" fill="#26314F"/>
+<rect x="372" y="208" width="176" height="44" rx="10" fill="#26314F"/>
+<circle cx="392" cy="118" r="9" fill="#22D3EE"/><circle cx="392" cy="174" r="9" fill="#22D3EE"/><circle cx="392" cy="230" r="9" fill="#22D3EE"/>
+</g>
+<g id="s2-stor">
+<rect x="670" y="90" width="160" height="64" rx="12" fill="#131B31" stroke="#B9C2D0" stroke-width="5"/>
+<rect x="670" y="164" width="160" height="64" rx="12" fill="#131B31" stroke="#B9C2D0" stroke-width="5"/>
+<rect x="670" y="238" width="160" height="64" rx="12" fill="#131B31" stroke="#B9C2D0" stroke-width="5"/>
+</g>
+<circle id="s2-p1" cx="250" cy="190" r="15" fill="#22D3EE"/>
+<circle id="s2-p2" cx="570" cy="190" r="15" fill="#22D3EE"/>
+<g id="s2-noauth" opacity="0">
+<rect x="330" y="330" width="260" height="72" rx="36" fill="#FF3B5C"/>
+<text x="460" y="378" text-anchor="middle" font-size="38" font-weight="900" fill="#fff" font-family="Inter,system-ui,sans-serif">NO AUTH CHECK</text>
+</g>
+</svg>
+<div class="cap" style="left:30px">KUBERNETES</div>
+<div class="cap" style="left:330px">CSM gRPC</div>
+<div class="cap" style="left:630px">POWERSTORE · MAX · FLEX</div>
+</div>
+<div class="chip" id="s2-chip">CVE-2026-63688</div>
+<div class="miss" id="s2-miss">missing authentication for critical function</div>
+</section>
+
+<!-- SCENE 3: KILL CHAIN with lock-break + typing terminal + node infection -->
+<section id="s3" class="clip s3" data-start="7" data-duration="9" data-track-index="0">
+<div class="rule" id="s3-rule"></div>
+<div class="label" id="s3-label">THE KILL CHAIN · 3 STEPS</div>
+<div class="steps">
+<div class="step" id="s3-st1">
+<svg class="icon" viewBox="0 0 150 150">
+<rect x="28" y="30" width="94" height="62" rx="10" fill="none" stroke="#F2F5F9" stroke-width="8"/>
+<rect x="18" y="98" width="114" height="12" rx="6" fill="#F2F5F9"/>
+<path id="s3-sig1" d="M48 58 a22 22 0 0 1 32 0" fill="none" stroke="#22D3EE" stroke-width="7" stroke-linecap="round"/>
+<path id="s3-sig2" d="M38 44 a38 38 0 0 1 52 0" fill="none" stroke="#22D3EE" stroke-width="7" stroke-linecap="round" opacity="0.45"/>
+<circle cx="64" cy="66" r="7" fill="#22D3EE"/>
+</svg>
+<div><b>UNAUTHENTICATED CALL</b><i>no password, no token, no account</i></div>
+</div>
+<div class="step" id="s3-st2">
+<svg class="icon" viewBox="0 0 150 150">
+<rect x="35" y="62" width="80" height="62" rx="12" fill="none" stroke="#F2F5F9" stroke-width="8"/>
+<g id="s3-shackle"><path d="M52 62 L52 40 a23 23 0 0 1 46 0 L98 62" fill="none" stroke="#F2F5F9" stroke-width="9" stroke-linecap="round"/></g>
+<circle cx="75" cy="90" r="9" fill="#22D3EE"/>
+<rect id="s3-crack" x="70" y="20" width="10" height="26" rx="5" fill="#FF3B5C" opacity="0" transform="rotate(24 75 33)"/>
+</svg>
+<div><b>ADMIN ACCESS</b><i>the server never asked WHO</i></div>
+</div>
+<div class="step root" id="s3-st3">
+<svg class="icon" viewBox="0 0 150 150">
+<rect x="18" y="30" width="114" height="80" rx="12" fill="#0A0F1E" stroke="#22D3EE" stroke-width="6"/>
+<text x="30" y="62" font-size="19" font-weight="700" fill="#B9C2D0" font-family="monospace">root@node-7:~#</text>
+<text x="30" y="90" font-size="19" font-weight="700" fill="#F2F5F9" font-family="monospace"><tspan class="tchar">w</tspan><tspan class="tchar">h</tspan><tspan class="tchar">o</tspan><tspan class="tchar">a</tspan><tspan class="tchar">m</tspan><tspan class="tchar">i</tspan></text>
+<circle class="s3-node" cx="40" cy="128" r="11" fill="#26314F"/>
+<circle class="s3-node" cx="75" cy="128" r="11" fill="#26314F"/>
+<circle class="s3-node" cx="110" cy="128" r="11" fill="#26314F"/>
+</svg>
+<div><b>ROOT ON THE NODE</b><i>secrets, pods, volumes, whole cluster</i></div>
+</div>
+</div>
+<div class="lessons" id="s3-lessons"><b>mTLS everywhere</b> · default-deny networking · <b>storage is Tier-0</b></div>
+</section>
+
+<!-- SCENE 4: OUTRO with drawing shield -->
+<section id="s4" class="clip s4" data-start="16" data-duration="4" data-track-index="0">
+<div class="rule" id="s4-rule"></div>
+<svg id="s4-shield" width="210" height="230" viewBox="0 0 210 230">
+<path id="s4-shieldpath" d="M105 12 L182 42 L182 108 C182 162 148 196 105 218 C62 196 28 162 28 108 L28 42 Z" fill="none" stroke="#22D3EE" stroke-width="12" stroke-linejoin="round"/>
+<path id="s4-shieldcheck" d="M78 110 L100 132 L136 88" fill="none" stroke="#F2F5F9" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<h2 id="s4-h">PATCH NOW. <em>NOT NEXT SPRINT.</em></h2>
+<div class="cta" id="s4-cta">Audit your internal services. Internal is a myth.</div>
+<div class="mast" id="s4-mast">ATUL ANAND</div>
+<div class="src" id="s4-src">Source: The Hacker News</div>
+</section>
+
+<audio id="bg-music" data-start="0" data-duration="20" data-track-index="10" data-volume="0.3" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+<audio id="sfx-1" data-start="0.2" data-duration="1.2" data-track-index="11" data-volume="0.8" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+<audio id="sfx-2" data-start="4.4" data-duration="1" data-track-index="12" data-volume="0.7" src="assets/sfx/casino/card-place-1.ogg"></audio>
+<audio id="sfx-3" data-start="7.3" data-duration="1" data-track-index="13" data-volume="0.7" src="assets/sfx/casino/card-slide-1.ogg"></audio>
+<audio id="sfx-4" data-start="9.5" data-duration="1" data-track-index="14" data-volume="0.7" src="assets/sfx/casino/card-slide-1.ogg"></audio>
+<audio id="sfx-5" data-start="11.7" data-duration="1.5" data-track-index="15" data-volume="0.85" src="assets/sfx/impact/impactBell_heavy_003.ogg"></audio>
+<audio id="sfx-6" data-start="13.5" data-duration="1" data-track-index="16" data-volume="0.65" src="assets/sfx/interface/drop_001.ogg"></audio>
+<audio id="sfx-7" data-start="16.2" data-duration="1.5" data-track-index="17" data-volume="0.8" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+<audio id="sfx-8" data-start="9.7" data-duration="1" data-track-index="18" data-volume="0.75" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+</div>
+<script>
+(function(){
+const tl = gsap.timeline({ paused: true });
+// --- Scene 1: gauge fills + counter + pings, headline slams ---
+const ARC = 2 * Math.PI * 140;
+const arc = document.getElementById('s1-arc');
+arc.style.strokeDasharray = ARC;
+arc.style.strokeDashoffset = ARC;
+tl.fromTo("#s1-rule", { scaleY: 0, transformOrigin: "top" }, { scaleY: 1, duration: 0.4, ease: "power2.out" }, 0.0);
+tl.fromTo("#s1-eyebrow", { y: -24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }, 0.1);
+tl.to(arc.style, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 0.25);
+const num = { v: 0 };
+const numEl = document.getElementById('s1-num');
+tl.to(num, { v: 10, duration: 1.1, ease: "power2.inOut", onUpdate: function(){ numEl.textContent = num.v.toFixed(1); } }, 0.25);
+tl.fromTo("#s1-ping1", { attr: { r: 140 }, opacity: 0.7 }, { attr: { r: 165 }, opacity: 0, duration: 0.7, ease: "power1.out" }, 0.5);
+tl.fromTo("#s1-ping2", { attr: { r: 140 }, opacity: 0.7 }, { attr: { r: 165 }, opacity: 0, duration: 0.7, ease: "power1.out" }, 1.0);
+tl.fromTo("#s1-h1", { y: 60, opacity: 0, scale: 0.92 }, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power4.out" }, 0.35);
+tl.fromTo("#s1-h2", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, 0.7);
+tl.fromTo("#s1-bg", { opacity: 0 }, { opacity: 0.16, duration: 0.8 }, 0.0);
+tl.to("#s1-h1", { opacity: 0, y: -30, duration: 0.3, ease: "power2.in" }, 2.65);
+// --- Scene 2: diagram builds, traffic flows, breach badge ---
+tl.fromTo("#s2-rule", { scaleY: 0, transformOrigin: "top" }, { scaleY: 1, duration: 0.4 }, 3.0);
+tl.fromTo("#s2-eyebrow", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3 }, 3.1);
+tl.fromTo("#s2-k8s", { opacity: 0, scale: 0.8, svgOrigin: "160 190" }, { opacity: 1, scale: 1, duration: 0.4 }, 3.2);
+tl.fromTo("#s2-bridge", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4 }, 3.45);
+tl.fromTo("#s2-stor", { opacity: 0, scale: 0.85, svgOrigin: "750 190" }, { opacity: 1, scale: 1, duration: 0.4 }, 3.7);
+tl.fromTo("#s2-spokes", { rotation: 0, svgOrigin: "160 190" }, { rotation: 60, duration: 3.4, ease: "none" }, 3.2);
+tl.fromTo("#s2-p1", { attr: { cx: 250 }, opacity: 0 }, { attr: { cx: 350 }, opacity: 1, duration: 0.5, ease: "power1.in" }, 4.0);
+tl.fromTo("#s2-p1", { attr: { cx: 250 } }, { attr: { cx: 350 }, duration: 0.5, ease: "power1.in", immediateRender: false }, 5.0);
+tl.fromTo("#s2-p2", { attr: { cx: 570 }, opacity: 0 }, { opacity: 1, attr: { cx: 670 }, duration: 0.5, ease: "power1.in" }, 4.5);
+tl.fromTo("#s2-h2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.4 }, 3.3);
+tl.fromTo("#s2-chip", { opacity: 0, y: 30, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)" }, 4.4);
+tl.fromTo("#s2-noauth", { opacity: 0, scale: 0.7, svgOrigin: "460 366" }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 5.6);
+tl.to("#s2-bridgebox", { stroke: "#FF3B5C", duration: 0.18 }, 5.6);
+tl.to("#s2-bridgebox", { stroke: "#22D3EE", duration: 0.3 }, 5.85);
+tl.fromTo("#s2-miss", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 5.0);
+tl.to("#s2-h2", { opacity: 0, duration: 0.3 }, 6.7);
+// --- Scene 3: kill chain with lock-break, typing, infection ---
+tl.fromTo("#s3-rule", { scaleY: 0, transformOrigin: "top" }, { scaleY: 1, duration: 0.5 }, 7.0);
+tl.fromTo("#s3-label", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3 }, 7.1);
+tl.fromTo("#s3-st1", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 7.4);
+tl.fromTo("#s3-sig1", { opacity: 0.2 }, { opacity: 1, duration: 0.3 }, 7.8);
+tl.fromTo("#s3-sig2", { opacity: 0.1 }, { opacity: 0.7, duration: 0.3 }, 8.0);
+tl.fromTo("#s3-st2", { opacity: 0, x: -70 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 9.4);
+// lock shackle snaps open + crack flash
+tl.to("#s3-shackle", { rotation: -38, transformOrigin: "right bottom", duration: 0.3, ease: "power3.in" }, 9.8);
+tl.fromTo("#s3-crack", { opacity: 0 }, { opacity: 1, duration: 0.12 }, 9.85);
+tl.to("#s3-crack", { opacity: 0, duration: 0.4 }, 10.0);
+tl.fromTo("#s3-st3", { opacity: 0, x: -70, scale: 0.96 }, { opacity: 1, x: 0, scale: 1, duration: 0.45, ease: "back.out(1.3)" }, 11.6);
+// terminal types whoami
+tl.to(".tchar", { opacity: 1, duration: 0.05, stagger: 0.14 }, 12.1);
+// nodes get infected one by one
+tl.to(".s3-node", { fill: "#FF3B5C", duration: 0.25, stagger: 0.3 }, 12.9);
+tl.fromTo("#s3-lessons", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 13.8);
+// --- Scene 4: shield draws, CTA holds ---
+const shp = document.getElementById('s4-shieldpath');
+const shL = shp.getTotalLength();
+shp.style.strokeDasharray = shL;
+shp.style.strokeDashoffset = shL;
+const shk = document.getElementById('s4-shieldcheck');
+const skL = shk.getTotalLength();
+shk.style.strokeDasharray = skL;
+shk.style.strokeDashoffset = skL;
+tl.fromTo("#s4-rule", { scaleY: 0, transformOrigin: "top" }, { scaleY: 1, duration: 0.4 }, 16.0);
+tl.to(shp.style, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 16.1);
+tl.to(shk.style, { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 16.8);
+tl.fromTo("#s4-h", { opacity: 0, y: 50, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 16.3);
+tl.fromTo("#s4-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 17.0);
+tl.fromTo("#s4-mast", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 17.4);
+tl.fromTo("#s4-src", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 17.7);
+window.__timelines["main"] = tl;
+})();
+</script>
+</body>
+</html>

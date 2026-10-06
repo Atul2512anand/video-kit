@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>BuildForge morph loop — 12 bars</title>
+<style>
+@font-face { font-family: 'Geist'; font-weight: 500; src: url('fonts/geist.woff2'); }
+@font-face { font-family: 'Geist'; font-weight: 700; src: url('fonts/geist.woff2'); }
+@font-face { font-family: 'Geist'; font-weight: 800; src: url('fonts/geist.woff2'); }
+html, body { margin: 0; padding: 0; background: #111; }
+#frame { position: relative; width: 1440px; height: 1440px; overflow: hidden; background: #F4F2ED; font-family: 'Geist', system-ui, sans-serif; }
+#camera { position: absolute; left: 0; top: 0; width: 1440px; height: 1440px; }
+#morph { position: absolute; background: #111; overflow: hidden; }
+.layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#caption { position: absolute; left: 48px; top: 40px; font-size: 28px; font-weight: 500; letter-spacing: 0.14em; color: #8f8b82; }
+#cursor { position: absolute; width: 44px; height: 44px; margin: -6px 0 0 -6px; z-index: 50; }
+#cursor svg { display: block; }
+.row { display: flex; align-items: center; }
+.pill-label { font-weight: 700; color: #fff; white-space: nowrap; }
+.cardlabel { font-weight: 700; color: #111; white-space: nowrap; }
+.sub { font-weight: 500; color: #6f6c65; white-space: nowrap; }
+.cmdkrow { width: 100%; display: flex; align-items: center; border-radius: 18px; }
+</style>
+</head>
+<body>
+<div id="frame">
+  <div id="camera">
+    <div id="caption">BUILDFORGE · MORPH LOOP · 123 BPM</div>
+    <div id="morph"></div>
+    <div id="cursor">
+      <svg width="44" height="44" viewBox="0 0 44 44"><path d="M12 6 L12 32 L19 25.5 L23 34 L27.5 32 L23.5 23.5 L31 23.5 Z" fill="#111" stroke="#fff" stroke-width="3"/></svg>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+// ---------- beat grid (video seconds, measured 123.05 BPM, 48 beats) ----------
+const B = [0,0.4992,0.9868,1.4745,1.9621,2.38,2.8676,3.4365,3.9358,4.435,4.9226,5.4102,5.9095,6.281,6.8731,7.3723,7.7555,8.2315,8.8352,9.2067,9.7175,10.1819,10.7857,11.1572,11.6912,12.1324,12.6781,13.1076,13.6881,14.0829,14.6518,15.1626,15.5457,16.1379,16.6023,17.0086,17.4962,17.9838,18.4715,18.9591,19.4467,19.9691,20.538,20.956,21.4668,21.8964,22.384,22.9413];
+const D = 23.4048;
+const PURPLE = '#7C3AED', INK = '#111', PAPER = '#fff';
+const clamp = (x,a,b)=>Math.min(b,Math.max(a,x));
+const lerp = (a,b,k)=>a+(b-a)*k;
+const sstep = (t,a,b)=>{ const k = clamp((t-a)/(b-a),0,1); return k*k*(3-2*k); };
+// normalized spring step response 0->1, slight overshoot
+function sstepResp(t,t0,w,z){
+  if(t<=t0) return 0;
+  const dt=t-t0, zc=Math.min(z,0.97), wd=w*Math.sqrt(1-zc*zc), e=Math.exp(-zc*w*dt);
+  return 1-e*(Math.cos(wd*dt)+zc*w/wd*Math.sin(wd*dt));
+}
+// superposition of target changes: changes=[[t0,x0],[t1,x1],...]
+function chain(t,changes,w,z){
+  let v=changes[0][1], prev=changes[0][1];
+  for(let i=1;i<changes.length;i++){
+    v += (changes[i][1]-prev)*sstepResp(t,changes[i][0],w,z);
+    prev=changes[i][1];
+  }
+  return v;
+}
+const morph = document.getElementById('morph');
+const cursorEl = document.getElementById('cursor');
+const camEl = document.getElementById('camera');
+
+// ---------- cursor path: [t,x,y,down] ----------
+const ROWY = [623,719,815,911];
+const CUR = [
+  [0,720,760,0],[B[1],720,760,1],[0.75,720,760,0],
+  [4.0,740,770,0],[4.1,1068,751,0],[B[9],1068,751,1],[4.65,1068,751,0],
+  [4.75,437,800,0],[B[10],437,800,1],[B[12],1003,800,1],[6.06,1003,800,0],
+  [6.0,720,640,0],[6.1,720,600,1],[B[13],720,400,1],[6.6,720,470,0],
+  [7.1,687,720,0],[B[15],687,720,1],[7.57,687,720,0],
+  [8.0,1050,500,0],[10.5,1050,500,0],
+  [11.0,880,620,0],[12.3,880,620,0],
+  [12.75,720,540,0],
+  [B[26]+0.05,720,540,0],[B[26]+0.45,720,ROWY[0],0],
+  [B[30]+0.15,720,ROWY[0],0],[B[30]+0.45,720,ROWY[1],0],
+  [B[34]+0.15,720,ROWY[1],0],[B[34]+0.45,720,ROWY[2],0],
+  [B[38]+0.15,720,ROWY[2],0],[B[38]+0.45,720,ROWY[3],0],
+  [20.4,720,ROWY[3],0],[20.75,720,ROWY[0],0],[21.3,720,ROWY[0],1],[21.45,720,ROWY[0],0],
+  [21.9,720,735,0],[22.6,720,760,0],[D,720,760,0]
+];
+function cursorAt(t){
+  let i=0;
+  while(i<CUR.length-2 && t>=CUR[i+1][0]) i++;
+  const a=CUR[i], b=CUR[i+1];
+  const k=sstep(t,a[0],Math.min(b[0],a[0]+0.28));
+  return [lerp(a[1],b[1],k), lerp(a[2],b[2],k), (t>=a[0]&&t<b[0])?a[3]:b[3]];
+}
+const CLICKS=[B[1],B[9],B[15],21.3];
+// ---------- camera: [t, scale] ----------
+const CAM=[[0,1],[11.0,1],[11.5,1.14],[12.4,1.14],[12.9,1.06],[20.3,1.06],[21.0,1.0],[D,1.0]];
+function camAt(t){
+  let v=1;
+  for(let i=1;i<CAM.length;i++){ v = lerp(CAM[i-1][1],CAM[i][1], sstep(t,CAM[i-1][0],CAM[i][0])); if(t<CAM[i][0]) break; }
+  return v;
+}
+
+// ---------- morph geometry keys: [t, w,h,r,bg] ----------
+const GEO=[
+  [B[0],  620,170,85, INK],
+  [B[2],  170,170,85, INK],     // loader circle
+  [B[4],  740,230,95, INK],     // check pill
+  [B[6],  760,190,95, INK],     // island
+  [B[8],  920,320,56, PAPER],   // player card
+  [B[12], 230,600,60, PAPER],   // volume card
+  [B[14], 640,190,95, INK],     // toggle track
+  [B[16], 980,190,95, '#E7E3D9'],// trio tabs
+  [B[19], 980,320,60, '#E7E3D9'],// case tabs + tagline
+  [B[22],1040,660,48, PAPER],   // chart card
+  [B[26], 920,600,32, PAPER],   // cmdk
+  [B[44], 700,190,80, INK],     // toast pill
+  [B[46], 620,170,85, INK]      // back to button
+];
+function geoAt(t){
+  const W=16,Z=0.9;
+  const g=(idx)=>chain(t,GEO.map(k=>[k[0],k[idx]]),W,Z);
+  return [g(1),g(2),g(3)];
+}
+function bgAt(t){
+  const cuts=[1.02,1.99,2.9,3.97,5.94,6.9,7.79,9.24,10.82,12.71,21.5,22.42];
+  const cols=[INK,INK,INK,INK,PAPER,PAPER,INK,'#E7E3D9','#E7E3D9',PAPER,PAPER,INK,INK];
+  let c=cols[0];
+  for(let i=0;i<cuts.length;i++) if(t>=cuts[i]) c=cols[i+1];
+  return c;
+}
+
+// ---------- content builders ----------
+function loaderHTML(t){
+  const rot = 720*(t-B[2]);
+  return `<svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(${rot}deg)">
+    <circle cx="60" cy="60" r="44" fill="none" stroke="#fff" stroke-width="14" opacity="0.25"/>
+    <circle cx="60" cy="60" r="44" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-dasharray="90 200"/></svg>`;
+}
+function checkHTML(t){
+  const k = sstep(t,2.0,2.5);
+  const off = 120*(1-k);
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+    <div style="font-size:30px;font-weight:700;letter-spacing:0.12em;color:#B9B5AB">NOT AN AGENCY</div>
+    <div class="row"><svg width="76" height="76" viewBox="0 0 110 110">
+    <circle cx="55" cy="55" r="46" fill="none" stroke="#fff" stroke-width="10"/>
+    <path d="M36 56 L50 70 L76 40" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="120" stroke-dashoffset="${off}"/></svg>
+    <div class="pill-label" style="font-size:54px;margin-left:24px">A BUILDING NETWORK.</div></div></div>`;
+}
+function islandHTML(t){
+  let bars='';
+  for(let i=0;i<5;i++){
+    const h = 26+44*Math.abs(Math.sin(t*7+i*1.7));
+    bars+=`<div style="width:14px;height:${h.toFixed(1)}px;background:#fff;border-radius:7px"></div>`;
+  }
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+    <div class="row" style="gap:26px">
+    <div style="width:26px;height:26px;border-radius:13px;background:${PURPLE}"></div>
+    <div class="pill-label" style="font-size:60px">83K+ views</div>
+    <div class="row" style="gap:10px;align-items:flex-end">${bars}</div></div>
+    <div style="font-size:26px;font-weight:500;letter-spacing:0.06em;color:#B9B5AB">Strategy · Brand · Content · Growth · Tech</div></div>`;
+}
+function playerHTML(t,dragV){
+  const playing = t>=B[9];
+  const icon = playing
+    ? `<rect x="38" y="30" width="16" height="52" rx="6" fill="#fff"/><rect x="66" y="30" width="16" height="52" rx="6" fill="#fff"/>`
+    : `<path d="M42 30 L82 56 L42 82 Z" fill="#fff"/>`;
+  const press = 1-0.15*(1-sstep(t,B[9],B[9]+0.15));
+  return `<div style="width:100%;padding:20px 56px;box-sizing:border-box;border:5px solid ${INK};border-radius:48px">
+    <div class="row" style="gap:30px">
+      <div style="width:130px;height:130px;border-radius:26px;background:${INK};display:flex;align-items:center;justify-content:center">
+        <span style="color:${PURPLE};font-weight:800;font-size:48px">BF</span></div>
+      <div style="flex:1">
+        <div class="cardlabel" style="font-size:40px">Wingmann — launch reel</div>
+        <div class="sub" style="font-size:31px;margin-top:6px">We build what moves brands forward.</div>
+      </div>
+      <div style="width:112px;height:112px;border-radius:56px;background:${INK};display:flex;align-items:center;justify-content:center;transform:scale(${press.toFixed(3)})">
+        <svg width="112" height="112" viewBox="0 0 112 112">${icon}</svg></div>
+    </div>
+    <div style="margin-top:34px;position:relative;height:44px">
+      <div style="position:absolute;left:0;right:0;top:16px;height:12px;border-radius:6px;background:#D8D4C9"></div>
+      <div style="position:absolute;left:0;top:16px;height:12px;border-radius:6px;background:${PURPLE};width:${(dragV*100).toFixed(2)}%"></div>
+      <div style="position:absolute;top:2px;width:40px;height:40px;border-radius:20px;background:${INK};left:calc(${(dragV*100).toFixed(2)}% - 20px)"></div>
+    </div></div>`;
+}
+function volumeHTML(t,volV,stretch){
+  const h = 380*volV;
+  return `<div style="border:5px solid ${INK};border-radius:54px;height:100%;box-sizing:border-box;transform:scaleY(${(1+stretch).toFixed(4)});display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div class="cardlabel" style="font-size:40px">${Math.round(volV*100)}</div>
+    <div style="font-size:26px;font-weight:700;letter-spacing:0.14em;color:#8f8b82;margin:4px 0 18px">GROWTH</div>
+    <div style="position:relative;width:44px;height:380px;border-radius:22px;background:#D8D4C9">
+      <div style="position:absolute;bottom:0;left:0;right:0;border-radius:22px;background:${PURPLE};height:${h.toFixed(1)}px"></div>
+      <div style="position:absolute;left:-23px;width:90px;height:90px;border-radius:45px;background:${INK};bottom:${(h-45).toFixed(1)}px"></div>
+    </div></div>`;
+}
+function toggleHTML(t){
+  const on = t>=B[15];
+  const k = chain(t,[[B[14]-0.4,0],[B[15],on?1:0]],16,0.72);
+  // two-edge knob: leading (right) edge stretches ahead via faster spring
+  const L = chain(t,[[B[14]-0.4,0],[B[15],on?1:0]],13,0.85);
+  const R = chain(t,[[B[14]-0.4,0],[B[15],on?1:0]],20,0.62);
+  const x0=42, x1=140;
+  const l = lerp(x0,x1,clamp(L,0,1.06)), r = lerp(x0+120,x1+120,clamp(R,0,1.06));
+  const kw = Math.max(60, r-l);
+  void k;
+  return `<div class="row" style="gap:24px">
+    <div style="font-size:46px;font-weight:800;color:${on?'#8f8b82':'#fff'}">THINK</div>
+    <div style="position:relative;width:260px;height:190px">
+      <div style="position:absolute;left:${l.toFixed(1)}px;top:27px;width:${kw.toFixed(1)}px;height:136px;border-radius:68px;background:#fff"></div>
+    </div>
+    <div style="font-size:46px;font-weight:800;color:${on?'#fff':'#8f8b82'}">GROW</div></div>`;
+}
+// liquid tab strip shared by trio + case tabs; labels colored only where pill covers them
+function tabStripHTML(t,labels,S1a,S1b,S2a,S2b){
+  const seg={l:[20,333,646], r:[313,626,939]};
+  const S1L=sstep(t,S1a[0],S1a[1]), S2L=sstep(t,S2a[0],S2a[1]);
+  const S1R=sstep(t,S1b[0],S1b[1]), S2R=sstep(t,S2b[0],S2b[1]);
+  const L=lerp(lerp(seg.l[0],seg.l[1],S1L),seg.l[2],S2L), R=lerp(lerp(seg.r[0],seg.r[1],S1R),seg.r[2],S2R);
+  const m1=(S1L+S1R)/2, m2=(S2L+S2R)/2;
+  const w=[(1-m1), m1*(1-m2), m2];
+  const cx=[163,490,817];
+  let html=`<div class="row" style="gap:0;position:relative;height:190px;width:980px;justify-content:space-around;align-items:center">`;
+  labels.forEach((s,i)=>{
+    const covered = (L<cx[i] && cx[i]<R);
+    html+=`<div style="font-size:52px;font-weight:800;color:${covered?'#fff':'#8f8b82'};z-index:2;width:300px;text-align:center">${s}</div>`;
+  });
+  html+=`<div style="position:absolute;left:${L.toFixed(1)}px;top:27px;width:${(R-L).toFixed(1)}px;height:136px;border-radius:68px;background:${INK}"></div></div>`;
+  return [html,w];
+}
+function trioHTML(t){
+  const [strip] = tabStripHTML(t,['THINK','BUILD','GROW'],
+    [8.0,8.35],[7.96,8.3],[8.62,8.9],[8.58,8.86]);
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px">${strip}</div>`;
+}
+function tabsHTML(t){
+  const [strip,w] = tabStripHTML(t,['FORENSIC','WINGMANN','RCET'],
+    [9.45,9.8],[9.41,9.75],[9.95,10.28],[9.91,10.23]);
+  const tags=['Not syllabus — aspiration.','No swiping. No ghosting.','Stop the scroll. Build trust.'];
+  let tagHtml=`<div style="position:relative;height:56px;width:980px;">`;
+  tags.forEach((s,i)=>{
+    tagHtml+=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:500;color:${INK};opacity:${clamp(w[i],0,1).toFixed(2)}">${s}</div>`;
+  });
+  tagHtml+=`</div>`;
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px">${strip}${tagHtml}</div>`;
+}
+function chartHTML(t){
+  const vals=[['83K+','views',1.0],['64%','non-followers',0.72],['+398','followers',0.45],['3.2K','visits',0.6]];
+  const t0=B[22]+0.2;
+  let bars='';
+  vals.forEach((v,i)=>{
+    const h = 350*v[2]*sstepResp(t,t0+i*0.3,9,0.75);
+    const c = i===0?PURPLE:INK;
+    bars+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:430px">
+      <div class="cardlabel" style="font-size:38px;margin-bottom:10px">${v[0]}</div>
+      <div style="width:110px;height:${Math.max(0,h).toFixed(1)}px;background:${c};border-radius:16px 16px 0 0"></div>
+      <div class="sub" style="font-size:26px;margin-top:10px">${v[1]}</div></div>`;
+  });
+  const tipK = sstep(t,B[24]-0.35,B[24]-0.2)*(1-sstep(t,B[24]+0.25,B[25]-0.03));
+  const tip = `<div style="position:absolute;left:560px;top:120px;background:${INK};color:#fff;border-radius:18px;padding:18px 26px;font-size:32px;font-weight:700;opacity:${tipK.toFixed(3)};transform:translateY(${((1-tipK)*-16).toFixed(1)}px)">Wingmann · 83K+ views</div>`;
+  return `${tip}<div style="width:100%;padding:24px 60px;box-sizing:border-box;border:5px solid ${INK};border-radius:42px">
+    <div class="cardlabel" style="font-size:44px">Wingmann — 30 days</div>
+    <div class="row" style="gap:18px;align-items:flex-end;margin-top:18px">${bars}</div></div>`;
+}
+function cmdkHTML(t){
+  // one query per ~2s: win -> for -> rce -> hel -> win+enter
+  const QUERIES=[[B[26],'win'],[B[30],'for'],[B[34],'rce'],[B[38],'hel'],[B[42],'win']];
+  let q='', qs=B[26];
+  for(const [s,qq] of QUERIES){ if(t>=s){ q=qq; qs=s; } }
+  const typed = t<B[26] ? '' : q.slice(0, clamp(Math.floor((t-qs)/0.13)+1,1,3));
+  const items=[['W','Wingmann · No swiping. No ghosting.'],['F','Forensic Wallah · Turn education into growth'],['R','RCET Prep · Content with a job to do'],['@','Say hello · ceo@buildforge.site']];
+  let rows='';
+  items.forEach((it,i)=>{
+    const vis = typed==='' || it[1].toLowerCase().includes(typed);
+    const hot = typed.length>0 && typed===q && it[1].toLowerCase().includes(typed) &&
+      items.slice(0,i).every(o=>!o[1].toLowerCase().includes(typed));
+    rows+=`<div class="cmdkrow" style="padding:18px 26px;gap:22px;background:${hot?INK:'transparent'};opacity:${vis?1:0.22}">
+      <div style="width:60px;height:60px;border-radius:15px;background:${hot?PURPLE:INK};color:#fff;font-weight:800;font-size:30px;display:flex;align-items:center;justify-content:center">${it[0]}</div>
+      <div style="font-size:32px;font-weight:${hot?800:500};color:${hot?'#fff':INK}">${it[1]}</div></div>`;
+  });
+  const caret = (t*2%1<0.6)?'▍':'';
+  return `<div style="width:100%;padding:20px 48px;box-sizing:border-box;border:5px solid ${INK};border-radius:26px">
+    <div class="row" style="gap:20px;border-bottom:3px solid #D8D4C9;padding-bottom:22px;margin-bottom:14px">
+      <div style="font-size:40px;color:#8f8b82">⌘K</div>
+      <div style="font-size:44px;font-weight:700;color:${INK}">${typed}${caret}</div></div>
+    ${rows}</div>`;
+}
+function toastHTML(){
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div class="row" style="gap:24px">
+    <svg width="64" height="64" viewBox="0 0 72 72"><circle cx="36" cy="36" r="32" fill="${PURPLE}"/><path d="M24 37 L33 46 L49 27" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="pill-label" style="font-size:50px">Case study opened</div></div>
+    <div style="font-size:34px;font-weight:700;color:${PURPLE}">buildforge.site</div></div>`;
+}
+
+// ---------- master seek ----------
+function segShow(t,a,b){ return sstep(t,a,a+0.14)*(1-sstep(t,b-0.02,b+0.12)); }
+function seek(t){
+  t = clamp(t,0,D);
+  const [w,h,r] = geoAt(t);
+  morph.style.width=w+'px'; morph.style.height=h+'px'; morph.style.borderRadius=r+'px';
+  morph.style.background=bgAt(t);
+  morph.style.left=(720-w/2)+'px'; morph.style.top=(760-h/2)+'px';
+  // scrub drag value direct from cursor x (track spans 316..1124)
+  const [ccx0,ccy0] = cursorAt(t);
+  const dragV = clamp((ccx0-316)/808,0,1);
+  // volume value direct from cursor y while held (640->400 maps 0.55->1.15)
+  let volV;
+  if(t<6.1) volV=0.55;
+  else if(t<6.6) volV = 0.55+0.6*clamp((640-ccy0)/240,0,1.12);
+  else volV = 0.55+0.6*(1-sstep(t,6.6,6.9));
+  const stretch = (t>B[13]&&t<6.85)? 0.08*Math.sin((t-B[13])*25)*Math.exp(-(t-B[13])*5) : 0;
+  const layers=[
+    [()=>`<div class="pill-label" style="font-size:64px">Let’s build it</div>`, segShow(t,-1,B[2])],
+    [()=>loaderHTML(t), segShow(t,B[2],B[4])],
+    [()=>checkHTML(t), segShow(t,B[4],B[6])],
+    [()=>islandHTML(t), segShow(t,B[6],B[8])],
+    [()=>playerHTML(t,dragV), segShow(t,B[8],B[12])],
+    [()=>volumeHTML(t,clamp(volV,0,1.15),stretch), segShow(t,B[12],B[14])],
+    [()=>toggleHTML(t), segShow(t,B[14],B[16])],
+    [()=>trioHTML(t), segShow(t,B[16],B[19])],
+    [()=>tabsHTML(t), segShow(t,B[19],B[22])],
+    [()=>chartHTML(t), segShow(t,B[22],B[26])],
+    [()=>cmdkHTML(t), segShow(t,B[26],B[44])],
+    [()=>toastHTML(), segShow(t,B[44],B[46])],
+    [()=>`<div class="pill-label" style="font-size:64px">Let’s build it</div>`, sstep(t,B[46]+0.05,B[46]+0.25)]
+  ];
+  let html='';
+  layers.forEach(([fn,k])=>{
+    if(k<=0.001) return;
+    const b=(1-k)*10;
+    html+=`<div class="layer" style="opacity:${k.toFixed(3)};filter:blur(${b.toFixed(1)}px)">${fn()}</div>`;
+  });
+  morph.innerHTML=html;
+  const [ccx,ccy,down] = cursorAt(t);
+  cursorEl.style.left=ccx+'px'; cursorEl.style.top=ccy+'px';
+  cursorEl.style.transform = down ? 'scale(0.85)' : 'scale(1)';
+  let rs='';
+  CLICKS.forEach(c=>{
+    if(t>=c&&t<c+0.35){
+      const xyz=cursorPosAt(c);
+      rs+=`<div style="position:absolute;left:${xyz[0]}px;top:${xyz[1]}px;width:90px;height:90px;margin:-45px 0 0 -45px;border:5px solid #111;border-radius:50%;opacity:${(1-(t-c)/0.35).toFixed(2)};transform:scale(${(0.4+((t-c)/0.35)*1.1).toFixed(2)})"></div>`;
+    }
+  });
+  camEl.querySelectorAll('.ckring').forEach(e=>e.remove());
+  if(rs){ const d=document.createElement('div'); d.className='ckring'; d.innerHTML=rs; camEl.appendChild(d); }
+  const s=camAt(t);
+  camEl.style.transform=`translate(720px,720px) scale(${s.toFixed(4)}) translate(-720px,-720px)`;
+}
+function cursorPosAt(tc){
+  let i=0; while(i<CUR.length-2 && tc>=CUR[i+1][0]) i++;
+  return [CUR[i][1],CUR[i][2]];
+}
+window.seek = seek;
+window.DUR = D; window.BEATS = B;
+(function(){
+  const q=new URLSearchParams(location.search);
+  let t = parseFloat(q.get('t')||'0');
+  seek(t);
+  let playing=false, t0=0, startT=t;
+  window.addEventListener('keydown',e=>{
+    if(e.code==='Space'){ e.preventDefault(); playing=!playing; t0=performance.now(); startT=t; }
+  });
+  (function loop(){
+    if(playing){ t=(startT+(performance.now()-t0)/1000)%(D+0.6); if(t>D) t=D; seek(t); }
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>
