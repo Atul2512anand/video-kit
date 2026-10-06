@@ -18,6 +18,28 @@ npx hyperframes skills update product-launch-video
 (`openrouter/openrouter/free`) — opencode picks it up automatically, so anyone
 cloning gets the same model.
 
+## Skills: online install or vendored copy
+
+`skills/` vendors every skill used here (Hyperframes suite, brag, media-use,
+all workflow skills — 23 total, ~33MB), so the kit works fully offline:
+
+```bash
+# use the vendored copies directly
+Copy-Item skills/* ~/.agents/skills -Recurse -Force
+```
+
+Prefer fresh versions instead? Skip `skills/` and run the two online commands:
+
+```bash
+npx skills add https://github.com/latent-spaces/brag --skill brag -g -y
+npx hyperframes skills update product-launch-video
+```
+
+Credits: brag (MIT, latent-spaces) bundles ende.app music + Kenney.nl CC0 SFX;
+Hyperframes skills via HeyGen. `onetake-motion` is intentionally NOT vendored
+(146MB of case films + PolyForm Noncommercial licence) — clone it separately
+if you need it.
+
 ## 2 · Pick a pipeline
 
 ### A. Morph-loop (single-shape UI motion, beat-synced, seamless loop)
