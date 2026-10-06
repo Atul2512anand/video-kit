@@ -45,6 +45,20 @@ cloning gets the same model.
    → poster baked as frame 0 → `share-copy.txt`.
 4. Reference: `composition/index.html` is the shipped Dell CSM explainer.
 
+### C. Brag platform intro (strategy doc → launch film, 15–25 s)
+
+`brag-platform/` — method in `PROMPT.md`, source notes in `SOURCE.md`.
+
+1. Read `brag-platform/PROMPT.md` (asks purpose / format / voice).
+2. Save video-usable facts as `SOURCE.md`; write `brag-plan.md` +
+   `composition-brief.md` (examples alongside as `*.example.md`); scaffold
+   with `npx hyperframes init composition`; stage music + SFX; author
+   `composition/index.html` (reference alongside).
+3. House rules that made the last one work: zero dead holds, every sound cued
+   to a visual, lavender (not purple) accents on dark blocks.
+4. Gate: `npx hyperframes check` (fix contrast/overlap errors) → snapshots →
+   render on approval → poster as frame 0 → `share-copy.txt`.
+
 ## Rules both pipelines share
 
 - All on-screen copy verbatim from the source. No invented claims/numbers.
